@@ -1,0 +1,52 @@
+I spent 6 months rebuilding our entire authentication system from scratch.
+
+Here's what I learned (and what nobody tells you):
+
+1. OAuth 2.0 is NOT as simple as the docs make it seem
+
+We started with "just add Google login" — ended up in a rabbit hole of refresh tokens, token rotation, and silent re-authentication.
+
+The gotcha? Mobile apps handle tokens completely differently than web apps.
+
+2. Session management is where security meets user experience
+
+Every decision has tradeoffs:
+- Short sessions = more secure, but users get annoyed
+- Long sessions = convenient, but higher risk if compromised
+- Sliding windows = best of both worlds, but complex to implement
+
+We went with 15-minute access tokens + 7-day refresh tokens with rotation.
+
+3. Rate limiting saved us from ourselves
+
+Without proper rate limiting on auth endpoints:
+- Brute force attacks become trivial
+- Password reset endpoints become a DDoS vector
+- Account enumeration attacks expose your user base
+
+We implemented progressive delays: 1s, 2s, 4s, 8s... after failed attempts.
+
+4. The "forgot password" flow has hidden complexity
+
+Think about:
+- Token expiration (we use 1 hour)
+- One-time use enforcement
+- Preventing token harvesting
+- Email deliverability issues
+- What happens if the user never receives the email?
+
+5. Multi-factor authentication is table stakes now
+
+But implementing it properly means:
+- TOTP backup codes (we generate 10)
+- Hardware key support (WebAuthn)
+- SMS as a fallback (controversial but necessary)
+- Recovery flows that don't bypass 2FA
+
+The biggest lesson?
+
+Security is never "done." It's a continuous process of threat modeling, testing, and iteration.
+
+If you're building auth: don't roll your own crypto, use established libraries, and get a security audit.
+
+What's your biggest auth headache? Drop it in the comments 👇
