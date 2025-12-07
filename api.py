@@ -310,6 +310,33 @@ class VidInWithProgress:
                 pass
 
 
+def cleanup_old_files():
+    """
+    Clean up old files from temp and videos folders before starting a new job.
+    This prevents disk space issues on free tier hosting.
+    """
+    import shutil
+    
+    folders_to_clean = ["temp", "videos"]
+    
+    for folder in folders_to_clean:
+        folder_path = Path(folder)
+        if folder_path.exists():
+            try:
+                # Delete all files and subdirectories in the folder
+                for item in folder_path.iterdir():
+                    try:
+                        if item.is_file():
+                            item.unlink()
+                        elif item.is_dir():
+                            shutil.rmtree(item)
+                    except Exception as e:
+                        print(f"Warning: Could not delete {item}: {e}")
+                print(f"✓ Cleaned up {folder}/ folder")
+            except Exception as e:
+                print(f"Warning: Error cleaning {folder}/: {e}")
+
+
 def run_video_generation_sync(job_id: str, text: str, aspect_ratio: str):
     """
     Synchronous wrapper to run video generation in a separate thread.
@@ -317,6 +344,9 @@ def run_video_generation_sync(job_id: str, text: str, aspect_ratio: str):
     This is needed because Playwright on Windows doesn't work well with
     nested event loops (like when running inside uvicorn).
     """
+    # Clean up old files before starting
+    cleanup_old_files()
+    
     # Create a new event loop for this thread
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
