@@ -410,6 +410,14 @@ async def generate_video(request: VideoGenerationRequest):
     if request.aspectRatio not in ["1:1", "9:16", "16:9"]:
         raise HTTPException(status_code=400, detail="Invalid aspect ratio")
     
+    # Limit text length to prevent very long videos that exceed server resources
+    max_text_length = 1500  # ~200-250 words, produces ~45-60 second videos
+    if len(request.text.strip()) > max_text_length:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Text is too long ({len(request.text)} chars). Maximum is {max_text_length} characters to ensure video generation completes successfully."
+        )
+    
     # Create job ID
     job_id = str(uuid.uuid4())
     
