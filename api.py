@@ -352,33 +352,24 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS middleware - allow frontend origins
-# Get allowed origins from environment or use defaults
-frontend_url = os.getenv("FRONTEND_URL", "")
+# CORS middleware - only allow specific frontend origins
 allowed_origins = [
+    # Production frontend
+    "https://vidin-frontend.vercel.app",
+    # Local development
     "http://localhost:3000",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
 
-# Add FRONTEND_URL if set
-if frontend_url:
+# Add FRONTEND_URL from environment if set (for custom domains)
+frontend_url = os.getenv("FRONTEND_URL", "")
+if frontend_url and frontend_url not in allowed_origins:
     allowed_origins.append(frontend_url)
-    # Also add without trailing slash if present, or with if not
-    if frontend_url.endswith("/"):
-        allowed_origins.append(frontend_url.rstrip("/"))
-    else:
-        allowed_origins.append(frontend_url + "/")
-
-# Add common Vercel patterns
-allowed_origins.extend([
-    "https://vidin-frontend.vercel.app",
-    "https://vidin.vercel.app",
-])
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for now - tighten in production
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
